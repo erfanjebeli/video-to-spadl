@@ -162,6 +162,64 @@ def number(value):
     return round(number_value, 2)
 
 
+def text_or_none(value):
+    if value is None:
+        return None
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+    return text
+
+
+def int_or_none(value):
+    if value is None or value == "":
+        return None
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def bool_or_none(value):
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "y"}:
+        return True
+    if text in {"0", "false", "no", "n"}:
+        return False
+    return None
+
+
+REVIEW_STATUSES = {"pending", "ok", "fixed", "reject"}
+RESULT_ID = {
+    "fail": 0,
+    "success": 1,
+    "offside": 2,
+    "owngoal": 3,
+    "yellow_card": 4,
+    "red_card": 5,
+}
+BODYPART_ID = {
+    "foot": 0,
+    "head": 1,
+    "other": 2,
+    "head/other": 3,
+    "foot_left": 4,
+    "foot_right": 5,
+}
+RESULT_NAMES = set(RESULT_ID)
+BODYPART_NAMES = set(BODYPART_ID)
+
+
 def load_events(stem):
     folder = output_dir(stem)
     workbook = folder / "spadl.xlsx" if folder else None
@@ -171,16 +229,94 @@ def load_events(stem):
 
     frame = pd.read_excel(workbook, sheet_name="actions")
     events = []
-    for record in frame.to_dict(orient="records"):
+    for index, record in enumerate(frame.to_dict(orient="records")):
+        action_id = int_or_none(record.get("action_id"))
+        if action_id is None:
+            action_id = index
         events.append(
             {
+                "id": action_id,
                 "time": number(record.get("time_seconds")) or 0,
-                "type": None if record.get("type_name") is None or (isinstance(record.get("type_name"), float) and math.isnan(record.get("type_name"))) else str(record.get("type_name")),
+                "type": text_or_none(record.get("type_name")),
+                "team": int_or_none(record.get("team_id")),
                 "x": number(record.get("start_x")),
                 "y": number(record.get("start_y")),
+                "end_x": number(record.get("end_x")),
+                "end_y": number(record.get("end_y")),
+                "confidence": number(record.get("tdeed_confidence")),
+                "result": text_or_none(record.get("result_name")),
+                "bodypart": text_or_none(record.get("bodypart_name")),
+                "jersey": int_or_none(record.get("jersey_number")),
+                "player_id": int_or_none(record.get("player_id")),
+                "player_distance": number(record.get("player_distance_m")),
+                "on_pitch": bool_or_none(record.get("on_pitch")),
+                "ball_seen": bool_or_none(record.get("ball_observed_start")),
+                "review_status": text_or_none(record.get("review_status")) or "pending",
+                "note": text_or_none(record.get("operator_note")),
             }
         )
     return events
+
+
+def save_event_reviews(stem, edits):
+    folder = output_dir(stem)
+    workbook = folder / "spadl.xlsx" if folder else None
+    if workbook is None or not workbook.is_file():
+        raise FileNotFoundError("workbook missing")
+    import pandas as pd
+
+    frame = pd.read_excel(workbook, sheet_name="actions")
+    if "review_status" not in frame.columns:
+        frame["review_status"] = None
+    if "operator_note" not in frame.columns:
+        frame["operator_note"] = None
+
+    by_id = {}
+    for edit in edits or []:
+        action_id = int_or_none(edit.get("id"))
+        if action_id is None:
+            continue
+        by_id[action_id] = edit
+
+    for index, row in frame.iterrows():
+        action_id = int_or_none(row.get("action_id"))
+        if action_id is None:
+            action_id = int(index)
+        edit = by_id.get(action_id)
+        if edit is None:
+            continue
+
+        if "type" in edit:
+            type_name = text_or_none(edit.get("type"))
+            frame.at[index, "type_name"] = type_name
+        if "result" in edit:
+            result_name = text_or_none(edit.get("result"))
+            if result_name is not None and result_name not in RESULT_NAMES:
+                raise ValueError(f"bad result: {result_name}")
+            frame.at[index, "result_name"] = result_name
+            frame.at[index, "result_id"] = RESULT_ID.get(result_name) if result_name else None
+        if "bodypart" in edit:
+            bodypart = text_or_none(edit.get("bodypart"))
+            if bodypart is not None and bodypart not in BODYPART_NAMES:
+                raise ValueError(f"bad bodypart: {bodypart}")
+            frame.at[index, "bodypart_name"] = bodypart
+            frame.at[index, "bodypart_id"] = BODYPART_ID.get(bodypart) if bodypart else None
+        if "jersey" in edit:
+            frame.at[index, "jersey_number"] = int_or_none(edit.get("jersey"))
+        if "team" in edit:
+            team = int_or_none(edit.get("team"))
+            frame.at[index, "team_id"] = team
+            frame.at[index, "team_name"] = None if team is None else f"team_{team}"
+        if "review_status" in edit:
+            status = text_or_none(edit.get("review_status")) or "pending"
+            if status not in REVIEW_STATUSES:
+                raise ValueError(f"bad review_status: {status}")
+            frame.at[index, "review_status"] = status
+        if "note" in edit:
+            frame.at[index, "operator_note"] = text_or_none(edit.get("note"))
+
+    frame.to_excel(workbook, sheet_name="actions", index=False)
+    return load_events(stem)
 
 
 def list_clips():
@@ -447,6 +583,9 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/clips/") and path.endswith("/source"):
             self.handle_bind_source(path[len("/api/clips/"):-len("/source")])
             return
+        if path.startswith("/api/clips/") and path.endswith("/review"):
+            self.handle_save_review(path[len("/api/clips/"):-len("/review")])
+            return
         self.send_json(404, {"ok": False, "message": "پیدا نشد."})
 
     def handle_bind_source(self, raw_stem):
@@ -470,6 +609,31 @@ class Handler(BaseHTTPRequestHandler):
             return
         remember_source(video)
         self.send_json(200, {"ok": True, "video_name": video.name})
+
+    def handle_save_review(self, raw_stem):
+        stem = safe_stem(raw_stem.strip("/"))
+        if stem is None:
+            self.send_json(404, {"ok": False, "message": "این اجرا پیدا نشد."})
+            return
+        kind = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if kind != "application/json" or length <= 0 or length > 2_000_000:
+            self.send_json(400, {"ok": False, "message": "اصلاحات خوانده نشد."})
+            return
+        try:
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            edits = payload.get("events")
+            if not isinstance(edits, list):
+                raise ValueError("events must be a list")
+            events = save_event_reviews(stem, edits)
+        except FileNotFoundError:
+            self.send_json(404, {"ok": False, "message": "جدول ایونت‌ها پیدا نشد."})
+            return
+        except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            self.send_json(400, {"ok": False, "message": "اصلاحات ذخیره نشد."})
+            say(f"REVIEW {stem} {exc}")
+            return
+        self.send_json(200, {"ok": True, "events": events})
 
     def handle_pick(self):
         if snapshot()["status"] == "running":

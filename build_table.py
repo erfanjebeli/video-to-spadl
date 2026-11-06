@@ -60,6 +60,8 @@ COLUMNS = [
     "ball_observed_start",
     "ball_observed_end",
     "on_pitch",
+    "review_status",
+    "operator_note",
 ]
 
 
@@ -240,6 +242,8 @@ def build(video_stem, tdeed_path, eagle_dir, output_path, period_id, fps, frame_
                 "ball_observed_start": start_frame in seen_ball,
                 "ball_observed_end": end_frame in seen_ball if end_frame is not None else None,
                 "on_pitch": on_pitch(start) and (end is None or on_pitch(end)),
+                "review_status": "pending",
+                "operator_note": None,
             }
         )
 

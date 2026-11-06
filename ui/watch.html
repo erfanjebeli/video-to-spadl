@@ -22,7 +22,12 @@
       --ink: #101411;
       --chalk: #f3ecdc;
       --amber: #e8943a;
-      --line: rgba(243, 236, 220, 0.72);
+      --line: rgba(236, 245, 232, 0.78);
+      --team-a: #e23b3b;
+      --team-b: #2f6dff;
+      --team-unknown: #d9d2c3;
+      --pitch-a: #1f6b3d;
+      --pitch-b: #175832;
     }
 
     * { box-sizing: border-box; }
@@ -92,47 +97,197 @@
       left: 14px;
       bottom: 58px;
       z-index: 2;
-      width: min(250px, 34%);
+      width: min(268px, 36%);
       aspect-ratio: 105 / 68;
-      background: rgba(16, 20, 17, 0.88);
-      border: 1px solid rgba(243, 236, 220, 0.45);
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid rgba(236, 245, 232, 0.28);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.45),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+      background:
+        linear-gradient(160deg, rgba(8, 18, 12, 0.22), rgba(0, 0, 0, 0.18)),
+        repeating-linear-gradient(
+          90deg,
+          var(--pitch-a) 0 12.5%,
+          var(--pitch-b) 12.5% 25%
+        );
     }
     .map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .map svg rect, .map svg line, .map svg circle { fill: none; stroke: var(--line); stroke-width: 0.6; }
-    .map svg line.pass { stroke: #e8943a; stroke-width: 0.9; stroke-dasharray: 1.35 1.05; stroke-linecap: round; }
+    .map svg .pitch-line {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 0.55;
+      vector-effect: non-scaling-stroke;
+    }
+    .map svg .pitch-fill { fill: rgba(255, 255, 255, 0.03); stroke: none; }
+    .map svg .pitch-spot { fill: rgba(236, 245, 232, 0.9); stroke: none; }
+    .map svg .goal-line { stroke: rgba(255, 255, 255, 0.92); stroke-width: 1.35; }
+    .map svg line.pass {
+      fill: none;
+      stroke: rgba(255, 236, 180, 0.78);
+      stroke-width: 0.85;
+      stroke-dasharray: 1.4 1.1;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 0.35px rgba(0, 0, 0, 0.35));
+    }
+    .map svg line.pass.team-0 { stroke: rgba(226, 59, 59, 0.88); }
+    .map svg line.pass.team-1 { stroke: rgba(47, 109, 255, 0.88); }
     #ball {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 0 0 2px #e8943a;
+      background:
+        radial-gradient(circle at 32% 28%, #ffffff 0 34%, #f0f0f0 35% 62%, #c8c8c8 100%);
+      box-shadow:
+        0 0 0 1.5px rgba(16, 20, 17, 0.55),
+        0 1px 3px rgba(0, 0, 0, 0.45),
+        0 0 10px rgba(255, 255, 255, 0.22);
       transform: translate(-50%, 50%);
-      z-index: 2;
+      z-index: 3;
       pointer-events: none;
+    }
+    #ball::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border-radius: 50%;
+      border: 1px solid rgba(40, 40, 40, 0.35);
+      background:
+        linear-gradient(115deg, transparent 46%, rgba(40, 40, 40, 0.45) 49% 51%, transparent 54%),
+        linear-gradient(25deg, transparent 46%, rgba(40, 40, 40, 0.4) 49% 51%, transparent 54%);
+      opacity: 0.85;
     }
     .marks { position: absolute; inset: 0; }
     .mark {
       position: absolute;
-      width: 14px;
-      height: 14px;
+      width: 7px;
+      height: 7px;
       margin: 0;
       padding: 0;
       border: 0;
       border-radius: 50%;
       transform: translate(-50%, 50%);
-      background: var(--chalk);
-      color: #1b140e;
-      font: 600 10px/14px "Vazirmatn", Tahoma, sans-serif;
+      background: var(--team-unknown);
+      box-shadow: 0 0 0 1.25px rgba(255, 255, 255, 0.85), 0 1px 2px rgba(0, 0, 0, 0.35);
+      color: #fff;
+      font: 700 10px/1 "Vazirmatn", Tahoma, sans-serif;
       cursor: pointer;
+      z-index: 1;
     }
-    .mark.off { background: transparent; box-shadow: inset 0 0 0 2px var(--amber); }
-    .mark.now { width: 22px; height: 22px; background: var(--amber); font-size: 11px; line-height: 22px; z-index: 1; }
+    .mark.team-0 { background: var(--team-a); }
+    .mark.team-1 { background: var(--team-b); }
+    .mark.off {
+      background: transparent;
+      box-shadow: inset 0 0 0 1.5px var(--amber), 0 0 0 1px rgba(0, 0, 0, 0.25);
+    }
+    .mark.now {
+      width: 12px;
+      height: 12px;
+      z-index: 2;
+      box-shadow:
+        0 0 0 1.5px rgba(255, 255, 255, 0.95),
+        0 0 0 3px rgba(232, 148, 58, 0.28),
+        0 1px 4px rgba(0, 0, 0, 0.35);
+      animation: pulse-now 1.6s ease-in-out infinite;
+    }
+    .mark.now.team-0 { background: var(--team-a); }
+    .mark.now.team-1 { background: var(--team-b); }
+    @keyframes pulse-now {
+      0%, 100% { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 0 0 3px rgba(232, 148, 58, 0.22), 0 1px 4px rgba(0, 0, 0, 0.35); }
+      50% { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 0 0 4px rgba(232, 148, 58, 0.14), 0 1px 5px rgba(0, 0, 0, 0.4); }
+    }
     .mark:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
 
     .empty, .choices { width: min(720px, calc(100% - 32px)); margin: 24px auto; font-size: 18px; }
     .choices a { color: var(--amber); }
     .choices li { margin: 8px 0; }
+
+    .work {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto 28px;
+      display: grid;
+      gap: 14px;
+    }
+    .review {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .card {
+      background: rgba(16, 20, 17, 0.92);
+      border: 1px solid rgba(243, 236, 220, 0.22);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .toolbar label { font-size: 13px; color: rgba(243, 236, 220, 0.78); }
+    .toolbar select, .toolbar button, .form select, .form input, .form textarea, .form button {
+      font: inherit;
+      color: var(--chalk);
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(243, 236, 220, 0.28);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    .toolbar button, .form button {
+      cursor: pointer;
+      background: rgba(232, 148, 58, 0.18);
+      border-color: rgba(232, 148, 58, 0.55);
+    }
+    .toolbar button:disabled, .form button:disabled { opacity: 0.45; cursor: default; }
+    .table-wrap { max-height: 340px; overflow: auto; border-radius: 8px; }
+    table.events {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    table.events th, table.events td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(243, 236, 220, 0.12);
+      text-align: right;
+      white-space: nowrap;
+    }
+    table.events th { position: sticky; top: 0; background: #151a16; z-index: 1; }
+    table.events tbody tr { cursor: pointer; }
+    table.events tbody tr:hover { background: rgba(232, 148, 58, 0.08); }
+    table.events tbody tr.active { background: rgba(232, 148, 58, 0.16); }
+    table.events tbody tr.low { box-shadow: inset 3px 0 0 #e23b3b; }
+    .conf {
+      display: inline-block;
+      min-width: 3.2em;
+      padding: 2px 6px;
+      border-radius: 999px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      background: rgba(243, 236, 220, 0.12);
+    }
+    .conf.high { background: rgba(56, 160, 90, 0.28); }
+    .conf.mid { background: rgba(232, 148, 58, 0.28); }
+    .conf.low { background: rgba(226, 59, 59, 0.3); }
+    .form { display: grid; gap: 8px; }
+    .form .row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; }
+    .form .row label { font-size: 13px; color: rgba(243, 236, 220, 0.78); }
+    .form textarea { min-height: 64px; resize: vertical; }
+    .form .hint { font-size: 12px; color: rgba(243, 236, 220, 0.62); line-height: 1.5; }
+    .form .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .caption .conf { margin-inline-start: 6px; }
+    @media (max-width: 920px) {
+      .review { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -148,22 +303,123 @@
     <button type="button" class="jump next" id="next">بعدی</button>
     <div class="map" id="map">
       <svg viewBox="0 0 105 68" aria-hidden="true">
-        <rect x="0.8" y="0.8" width="103.4" height="66.4"></rect>
-        <line x1="52.5" y1="0.8" x2="52.5" y2="67.2"></line>
-        <circle cx="52.5" cy="34" r="9.15"></circle>
-        <rect x="0.8" y="13.84" width="16.5" height="40.32"></rect>
-        <rect x="87.7" y="13.84" width="16.5" height="40.32"></rect>
-        <line x1="1.6" y1="30.34" x2="1.6" y2="37.66" stroke-width="1.4"></line>
-        <line x1="103.4" y1="30.34" x2="103.4" y2="37.66" stroke-width="1.4"></line>
+        <rect class="pitch-fill" x="0.8" y="0.8" width="103.4" height="66.4" rx="1.2"></rect>
+        <rect class="pitch-line" x="0.8" y="0.8" width="103.4" height="66.4" rx="1.2"></rect>
+        <line class="pitch-line" x1="52.5" y1="0.8" x2="52.5" y2="67.2"></line>
+        <circle class="pitch-line" cx="52.5" cy="34" r="9.15"></circle>
+        <circle class="pitch-spot" cx="52.5" cy="34" r="0.7"></circle>
+        <rect class="pitch-line" x="0.8" y="13.84" width="16.5" height="40.32"></rect>
+        <rect class="pitch-line" x="0.8" y="24.84" width="5.5" height="18.32"></rect>
+        <rect class="pitch-line" x="87.7" y="13.84" width="16.5" height="40.32"></rect>
+        <rect class="pitch-line" x="98.7" y="24.84" width="5.5" height="18.32"></rect>
+        <path class="pitch-line" d="M17.3 26.2 A9.15 9.15 0 0 1 17.3 41.8"></path>
+        <path class="pitch-line" d="M87.7 26.2 A9.15 9.15 0 0 0 87.7 41.8"></path>
+        <line class="pitch-line goal-line" x1="0.8" y1="30.34" x2="0.8" y2="37.66"></line>
+        <line class="pitch-line goal-line" x1="104.2" y1="30.34" x2="104.2" y2="37.66"></line>
         <g id="passes"></g>
       </svg>
       <div class="marks" id="marks"></div>
       <div id="ball" hidden></div>
     </div>
     <div class="caption" id="caption">
-      <p class="meta"><span id="count"></span><span id="clock" dir="ltr"></span></p>
+      <p class="meta"><span id="count"></span><span id="clock" dir="ltr"></span><span id="confidence" class="conf" hidden></span></p>
       <strong id="kind"></strong>
       <span id="place" dir="ltr"></span>
+    </div>
+  </div>
+  <div class="work" id="work" hidden>
+    <div class="review">
+      <section class="card">
+        <h2>لیست ایونت‌ها برای اپراتور</h2>
+        <div class="toolbar">
+          <label for="sortBy">مرتب‌سازی</label>
+          <select id="sortBy">
+            <option value="time">زمان</option>
+            <option value="confidence-asc">اطمینان (کم به زیاد)</option>
+            <option value="confidence-desc">اطمینان (زیاد به کم)</option>
+            <option value="pending">اول بررسی‌نشده‌ها</option>
+          </select>
+          <label for="filterLow"><input type="checkbox" id="filterLow"> فقط اطمینان زیر ۵۰٪</label>
+        </div>
+        <div class="table-wrap">
+          <table class="events">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>زمان</th>
+                <th>نوع</th>
+                <th>اطمینان</th>
+                <th>نتیجه</th>
+                <th>پیراهن</th>
+                <th>وضعیت</th>
+              </tr>
+            </thead>
+            <tbody id="eventRows"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card">
+        <h2>فرم اصلاح ایونت</h2>
+        <form class="form" id="reviewForm">
+          <p class="hint">مدل فقط پیشنهاد می‌دهد. فیلدهای خالی مثل نتیجه و شماره پیراهن را اپراتور پر می‌کند.</p>
+          <div class="row"><label for="fieldType">نوع</label>
+            <select id="fieldType">
+              <option value="PASS">پاس</option>
+              <option value="CROSS">سانتر</option>
+              <option value="THROW IN">پرتاب اوت</option>
+              <option value="DRIVE">حمل توپ</option>
+              <option value="SHOT">شوت</option>
+              <option value="GOAL">گل</option>
+              <option value="BALL PLAYER BLOCK">قطع توپ</option>
+              <option value="PLAYER SUCCESSFUL TACKLE">تکل موفق</option>
+            </select>
+          </div>
+          <div class="row"><label for="fieldResult">نتیجه</label>
+            <select id="fieldResult">
+              <option value="">— خالی —</option>
+              <option value="success">موفق</option>
+              <option value="fail">ناموفق</option>
+              <option value="offside">آفساید</option>
+              <option value="owngoal">گل به خودی</option>
+              <option value="yellow_card">کارت زرد</option>
+              <option value="red_card">کارت قرمز</option>
+            </select>
+          </div>
+          <div class="row"><label for="fieldBodypart">عضو بدن</label>
+            <select id="fieldBodypart">
+              <option value="">— خالی —</option>
+              <option value="foot">پا</option>
+              <option value="foot_left">پای چپ</option>
+              <option value="foot_right">پای راست</option>
+              <option value="head">سر</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="row"><label for="fieldJersey">شماره پیراهن</label><input id="fieldJersey" type="number" min="0" max="99" placeholder="مثلاً ۱۰"></div>
+          <div class="row"><label for="fieldTeam">تیم</label>
+            <select id="fieldTeam">
+              <option value="">— نامشخص —</option>
+              <option value="0">تیم ۰ (قرمز)</option>
+              <option value="1">تیم ۱ (آبی)</option>
+            </select>
+          </div>
+          <div class="row"><label for="fieldStatus">وضعیت بررسی</label>
+            <select id="fieldStatus">
+              <option value="pending">نیاز به بررسی</option>
+              <option value="ok">تأیید</option>
+              <option value="fixed">اصلاح شد</option>
+              <option value="reject">حذف / رد</option>
+            </select>
+          </div>
+          <div class="row"><label for="fieldNote">یادداشت</label><textarea id="fieldNote" placeholder="نکته برای خودت یا اپراتور بعدی"></textarea></div>
+          <p class="hint" id="qualityHint"></p>
+          <div class="actions">
+            <button type="submit" id="saveOne">ذخیره این ایونت</button>
+            <button type="button" id="saveAll">ذخیره همه تغییرها</button>
+            <span id="saveMsg" class="hint"></span>
+          </div>
+        </form>
+      </section>
     </div>
   </div>
   <script>
@@ -180,6 +436,7 @@
 
     const video = document.querySelector("#video");
     const stage = document.querySelector("#stage");
+    const work = document.querySelector("#work");
     const empty = document.querySelector("#empty");
     const choices = document.querySelector("#choices");
     const title = document.querySelector("#title");
@@ -188,13 +445,32 @@
     const ball = document.querySelector("#ball");
     const kind = document.querySelector("#kind");
     const clock = document.querySelector("#clock");
+    const confidenceEl = document.querySelector("#confidence");
     const place = document.querySelector("#place");
     const prev = document.querySelector("#prev");
     const next = document.querySelector("#next");
+    const eventRows = document.querySelector("#eventRows");
+    const sortBy = document.querySelector("#sortBy");
+    const filterLow = document.querySelector("#filterLow");
+    const fieldType = document.querySelector("#fieldType");
+    const fieldResult = document.querySelector("#fieldResult");
+    const fieldBodypart = document.querySelector("#fieldBodypart");
+    const fieldJersey = document.querySelector("#fieldJersey");
+    const fieldTeam = document.querySelector("#fieldTeam");
+    const fieldStatus = document.querySelector("#fieldStatus");
+    const fieldNote = document.querySelector("#fieldNote");
+    const qualityHint = document.querySelector("#qualityHint");
+    const saveMsg = document.querySelector("#saveMsg");
+    const reviewForm = document.querySelector("#reviewForm");
 
     let events = [];
     let current = 0;
     let seeking = false;
+    let dirty = new Set();
+    let clipStem = "";
+    let filling = false;
+
+    const STATUS_FA = { pending: "بررسی", ok: "تأیید", fixed: "اصلاح", reject: "رد" };
 
     function params() {
       return new URLSearchParams(location.search);
@@ -222,6 +498,165 @@
 
     function isPass(item) {
       return item && (item.type === "PASS" || item.type === "CROSS");
+    }
+
+    function teamClass(item) {
+      if (!item || item.team === null || item.team === undefined) return "";
+      if (item.team === 0) return "team-0";
+      if (item.team === 1) return "team-1";
+      return "";
+    }
+
+    function confidenceLevel(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "";
+      if (value < 0.5) return "low";
+      if (value < 0.7) return "mid";
+      return "high";
+    }
+
+    function confidenceText(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+      return Math.round(Number(value) * 100) + "%";
+    }
+
+    function ensureTypeOption(type) {
+      if (!type) return;
+      const exists = Array.from(fieldType.options).some((option) => option.value === type);
+      if (!exists) {
+        const option = document.createElement("option");
+        option.value = type;
+        option.textContent = type;
+        fieldType.appendChild(option);
+      }
+    }
+
+    function orderedIndexes() {
+      let indexes = events.map((_, index) => index);
+      if (filterLow.checked) {
+        indexes = indexes.filter((index) => {
+          const value = events[index].confidence;
+          return value !== null && value !== undefined && value < 0.5;
+        });
+      }
+      const mode = sortBy.value;
+      indexes.sort((a, b) => {
+        const left = events[a];
+        const right = events[b];
+        if (mode === "confidence-asc") return (left.confidence ?? 2) - (right.confidence ?? 2) || a - b;
+        if (mode === "confidence-desc") return (right.confidence ?? -1) - (left.confidence ?? -1) || a - b;
+        if (mode === "pending") {
+          const leftPending = left.review_status === "pending" ? 0 : 1;
+          const rightPending = right.review_status === "pending" ? 0 : 1;
+          return leftPending - rightPending || (left.confidence ?? 2) - (right.confidence ?? 2) || a - b;
+        }
+        return (left.time || 0) - (right.time || 0) || a - b;
+      });
+      return indexes;
+    }
+
+    function renderList() {
+      eventRows.replaceChildren();
+      orderedIndexes().forEach((index) => {
+        const item = events[index];
+        const row = document.createElement("tr");
+        const level = confidenceLevel(item.confidence);
+        row.className = (index === current ? "active" : "") + (level === "low" ? " low" : "");
+        row.innerHTML =
+          "<td>" + fa(index + 1) + "</td>" +
+          "<td dir=\"ltr\">" + clockText(item.time) + "</td>" +
+          "<td>" + (NAMES[item.type] || item.type || "—") + "</td>" +
+          "<td><span class=\"conf " + level + "\">" + confidenceText(item.confidence) + "</span></td>" +
+          "<td>" + (item.result || "—") + "</td>" +
+          "<td>" + (item.jersey === null || item.jersey === undefined ? "—" : fa(item.jersey)) + "</td>" +
+          "<td>" + (STATUS_FA[item.review_status] || item.review_status || "بررسی") + "</td>";
+        row.addEventListener("click", () => go(index));
+        eventRows.appendChild(row);
+      });
+    }
+
+    function fillForm() {
+      const item = events[current];
+      if (!item) return;
+      filling = true;
+      ensureTypeOption(item.type);
+      fieldType.value = item.type || "PASS";
+      fieldResult.value = item.result || "";
+      fieldBodypart.value = item.bodypart || "";
+      fieldJersey.value = item.jersey === null || item.jersey === undefined ? "" : item.jersey;
+      fieldTeam.value = item.team === null || item.team === undefined ? "" : String(item.team);
+      fieldStatus.value = item.review_status || "pending";
+      fieldNote.value = item.note || "";
+      const hints = [];
+      if (item.confidence !== null && item.confidence !== undefined) {
+        hints.push("اطمینان مدل: " + confidenceText(item.confidence));
+      }
+      if (item.on_pitch === false) hints.push("مختصات خارج زمین است");
+      if (item.ball_seen === false) hints.push("توپ در این فریم دیده نشده");
+      if (item.player_distance !== null && item.player_distance !== undefined) {
+        hints.push("فاصله بازیکن تا توپ: " + item.player_distance + " متر");
+      }
+      qualityHint.textContent = hints.join(" · ");
+      filling = false;
+    }
+
+    function readFormIntoCurrent() {
+      const item = events[current];
+      if (!item || filling) return;
+      item.type = fieldType.value || item.type;
+      item.result = fieldResult.value || null;
+      item.bodypart = fieldBodypart.value || null;
+      item.jersey = fieldJersey.value === "" ? null : Number(fieldJersey.value);
+      item.team = fieldTeam.value === "" ? null : Number(fieldTeam.value);
+      item.review_status = fieldStatus.value || "pending";
+      item.note = fieldNote.value.trim() || null;
+      dirty.add(item.id);
+    }
+
+    async function saveEdits(onlyCurrent) {
+      if (!clipStem) return;
+      readFormIntoCurrent();
+      const payload = {
+        events: events
+          .filter((item) => !onlyCurrent || item.id === events[current].id)
+          .filter((item) => dirty.has(item.id) || (onlyCurrent && item.id === events[current].id))
+          .map((item) => ({
+            id: item.id,
+            type: item.type,
+            result: item.result,
+            bodypart: item.bodypart,
+            jersey: item.jersey,
+            team: item.team,
+            review_status: item.review_status,
+            note: item.note,
+          })),
+      };
+      if (!payload.events.length && onlyCurrent) {
+        payload.events = [{
+          id: events[current].id,
+          type: events[current].type,
+          result: events[current].result,
+          bodypart: events[current].bodypart,
+          jersey: events[current].jersey,
+          team: events[current].team,
+          review_status: events[current].review_status,
+          note: events[current].note,
+        }];
+      }
+      saveMsg.textContent = "در حال ذخیره…";
+      const response = await fetch("/api/clips/" + encodeURIComponent(clipStem) + "/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        saveMsg.textContent = data.message || "ذخیره نشد.";
+        return;
+      }
+      events = data.events || events;
+      dirty.clear();
+      saveMsg.textContent = "ذخیره شد.";
+      draw();
     }
 
     function destination(index) {
@@ -278,7 +713,8 @@
         const end = destination(index);
         if (!end) return;
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("class", "pass");
+        const team = teamClass(item);
+        line.setAttribute("class", "pass" + (team ? " " + team : ""));
         line.setAttribute("x1", clamp(item.x, 0, 105));
         line.setAttribute("y1", 68 - clamp(item.y, 0, 68));
         line.setAttribute("x2", clamp(end.x, 0, 105));
@@ -298,10 +734,13 @@
         const y = clamp(item.y, 0, 68);
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "mark" + (index === current ? " now" : "") + (off ? " off" : "");
+        const team = teamClass(item);
+        button.className = "mark"
+          + (index === current ? " now" : "")
+          + (off ? " off" : "")
+          + (team ? " " + team : "");
         button.style.left = (x / 105) * 100 + "%";
         button.style.bottom = (y / 68) * 100 + "%";
-        button.textContent = index === current ? String(index + 1) : "";
         button.setAttribute("aria-label", labelOf(item.type) + " " + clockText(item.time));
         button.addEventListener("click", () => go(index));
         marks.appendChild(button);
@@ -313,9 +752,15 @@
       document.querySelector("#count").textContent = "ایونت " + fa(current + 1) + " از " + fa(events.length);
       clock.textContent = clockText(time);
       kind.textContent = labelOf(event.type);
+      const level = confidenceLevel(event.confidence);
+      confidenceEl.hidden = false;
+      confidenceEl.className = "conf " + level;
+      confidenceEl.textContent = "اطمینان " + confidenceText(event.confidence);
       place.textContent = point ? "توپ " + point.x.toFixed(1) + " , " + point.y.toFixed(1) : "مختصات توپ خالی است";
       prev.disabled = current <= 0;
       next.disabled = current >= events.length - 1;
+      renderList();
+      fillForm();
     }
 
     function follow(time) {
@@ -328,6 +773,7 @@
     }
 
     function go(index) {
+      readFormIntoCurrent();
       current = Math.max(0, Math.min(events.length - 1, index));
       const target = events[current].time || 0;
       if (Math.abs((video.currentTime || 0) - target) < 0.05) {
@@ -424,6 +870,8 @@
         return;
       }
       events = data.events || [];
+      clipStem = stem;
+      dirty.clear();
       title.textContent = data.video_name || stem;
       if (!data.media) {
         empty.hidden = false;
@@ -431,10 +879,25 @@
         return;
       }
       stage.hidden = false;
+      work.hidden = false;
       video.src = data.media;
       current = 0;
       draw();
     }
+
+    sortBy.addEventListener("change", renderList);
+    filterLow.addEventListener("change", renderList);
+    [fieldType, fieldResult, fieldBodypart, fieldJersey, fieldTeam, fieldStatus, fieldNote].forEach((field) => {
+      field.addEventListener("change", () => { readFormIntoCurrent(); renderList(); });
+      field.addEventListener("input", () => { readFormIntoCurrent(); });
+    });
+    reviewForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveEdits(true).catch(() => { saveMsg.textContent = "ذخیره نشد."; });
+    });
+    document.querySelector("#saveAll").addEventListener("click", () => {
+      saveEdits(false).catch(() => { saveMsg.textContent = "ذخیره نشد."; });
+    });
 
     const stem = params().get("stem");
     if (stem) showClip(stem).catch(() => { empty.hidden = false; empty.textContent = "ارتباط با برنامه قطع شد."; });

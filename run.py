@@ -95,7 +95,7 @@ def main():
         raise SystemExit(f"Eagle output was not written: {eagle_dir}")
 
     path, table = build(stem, events_json, eagle_dir, workbook, args.period_id, fps, frame_width)
-    shown = table[["time_seconds", "type_name", "team_name", "player_id", "start_x", "start_y", "end_x", "end_y", "on_pitch"]]
+    shown = table[["time_seconds", "type_name", "tdeed_confidence", "team_name", "player_id", "start_x", "start_y", "end_x", "end_y", "on_pitch"]]
     print(shown.to_string(index=False))
     print("Wrote", path)
 
