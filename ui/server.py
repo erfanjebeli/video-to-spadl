@@ -216,8 +216,57 @@ BODYPART_ID = {
     "foot_left": 4,
     "foot_right": 5,
 }
+TYPE_ID = {
+    "PASS": 0,
+    "CROSS": 1,
+    "THROW IN": 2,
+    "PLAYER SUCCESSFUL TACKLE": 9,
+    "SHOT": 11,
+    "GOAL": 11,
+    "DRIVE": 21,
+    "BALL PLAYER BLOCK": 10,
+    "OUT": 22,
+}
 RESULT_NAMES = set(RESULT_ID)
 BODYPART_NAMES = set(BODYPART_ID)
+
+
+def read_actions_frame(stem):
+    folder = output_dir(stem)
+    workbook = folder / "spadl.xlsx" if folder else None
+    if workbook is None or not workbook.is_file():
+        raise FileNotFoundError("workbook missing")
+    import pandas as pd
+
+    frame = pd.read_excel(workbook, sheet_name="actions")
+    for column in ("review_status", "operator_note", "event_source"):
+        if column not in frame.columns:
+            frame[column] = None
+    return workbook, frame
+
+
+def notes_fps(stem):
+    folder = output_dir(stem)
+    notes = folder / "spadl.notes.json" if folder else None
+    if notes is None or not notes.is_file():
+        return 25.0
+    try:
+        payload = json.loads(notes.read_text(encoding="utf-8"))
+        fps = float(payload.get("fps") or 25)
+        return fps if fps > 0 else 25.0
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return 25.0
+
+
+def renumber_actions(frame):
+    sort_cols = [column for column in ("period_id", "time_seconds") if column in frame.columns]
+    if sort_cols:
+        frame = frame.sort_values(sort_cols, kind="mergesort").reset_index(drop=True)
+    else:
+        frame = frame.reset_index(drop=True)
+    for index in range(len(frame)):
+        frame.at[index, "action_id"] = index
+    return frame
 
 
 def load_events(stem):
@@ -253,23 +302,14 @@ def load_events(stem):
                 "ball_seen": bool_or_none(record.get("ball_observed_start")),
                 "review_status": text_or_none(record.get("review_status")) or "pending",
                 "note": text_or_none(record.get("operator_note")),
+                "source": text_or_none(record.get("event_source")) or "model",
             }
         )
     return events
 
 
 def save_event_reviews(stem, edits):
-    folder = output_dir(stem)
-    workbook = folder / "spadl.xlsx" if folder else None
-    if workbook is None or not workbook.is_file():
-        raise FileNotFoundError("workbook missing")
-    import pandas as pd
-
-    frame = pd.read_excel(workbook, sheet_name="actions")
-    if "review_status" not in frame.columns:
-        frame["review_status"] = None
-    if "operator_note" not in frame.columns:
-        frame["operator_note"] = None
+    workbook, frame = read_actions_frame(stem)
 
     by_id = {}
     for edit in edits or []:
@@ -289,6 +329,22 @@ def save_event_reviews(stem, edits):
         if "type" in edit:
             type_name = text_or_none(edit.get("type"))
             frame.at[index, "type_name"] = type_name
+            frame.at[index, "type_id"] = TYPE_ID.get(type_name) if type_name else None
+        if "time" in edit:
+            time_seconds = number(edit.get("time"))
+            if time_seconds is None or time_seconds < 0:
+                raise ValueError("bad time")
+            frame.at[index, "time_seconds"] = time_seconds
+            fps = notes_fps(stem)
+            frame.at[index, "tdeed_frame"] = int(round(time_seconds * fps))
+        if "x" in edit:
+            frame.at[index, "start_x"] = number(edit.get("x"))
+        if "y" in edit:
+            frame.at[index, "start_y"] = number(edit.get("y"))
+        if "end_x" in edit:
+            frame.at[index, "end_x"] = number(edit.get("end_x"))
+        if "end_y" in edit:
+            frame.at[index, "end_y"] = number(edit.get("end_y"))
         if "result" in edit:
             result_name = text_or_none(edit.get("result"))
             if result_name is not None and result_name not in RESULT_NAMES:
@@ -315,6 +371,111 @@ def save_event_reviews(stem, edits):
         if "note" in edit:
             frame.at[index, "operator_note"] = text_or_none(edit.get("note"))
 
+    if any("time" in edit for edit in by_id.values()):
+        frame = renumber_actions(frame)
+    frame.to_excel(workbook, sheet_name="actions", index=False)
+    return load_events(stem)
+
+
+def add_manual_event(stem, payload):
+    import pandas as pd
+
+    workbook, frame = read_actions_frame(stem)
+    time_seconds = number(payload.get("time"))
+    if time_seconds is None or time_seconds < 0:
+        raise ValueError("bad time")
+    type_name = text_or_none(payload.get("type")) or "PASS"
+    team = int_or_none(payload.get("team"))
+    result_name = text_or_none(payload.get("result"))
+    if result_name is not None and result_name not in RESULT_NAMES:
+        raise ValueError(f"bad result: {result_name}")
+    bodypart = text_or_none(payload.get("bodypart"))
+    if bodypart is not None and bodypart not in BODYPART_NAMES:
+        raise ValueError(f"bad bodypart: {bodypart}")
+    start_x = number(payload.get("x"))
+    start_y = number(payload.get("y"))
+    fps = notes_fps(stem)
+    period_id = int_or_none(payload.get("period_id")) or 1
+    if "period_id" in frame.columns and len(frame):
+        first_period = int_or_none(frame.iloc[0].get("period_id"))
+        if first_period is not None:
+            period_id = first_period
+    game_id = text_or_none(frame.iloc[0].get("game_id")) if len(frame) else stem
+    next_id = int(frame["action_id"].max()) + 1 if len(frame) and frame["action_id"].notna().any() else len(frame)
+
+    row = {column: None for column in frame.columns}
+    row.update(
+        {
+            "game_id": game_id,
+            "original_event_id": next_id,
+            "period_id": period_id,
+            "time_seconds": time_seconds,
+            "team_id": team,
+            "team_name": None if team is None else f"team_{team}",
+            "jersey_number": int_or_none(payload.get("jersey")),
+            "start_x": start_x,
+            "start_y": start_y,
+            "end_x": number(payload.get("end_x")),
+            "end_y": number(payload.get("end_y")),
+            "action_id": next_id,
+            "type_id": TYPE_ID.get(type_name),
+            "type_name": type_name,
+            "result_id": RESULT_ID.get(result_name) if result_name else None,
+            "result_name": result_name,
+            "bodypart_id": BODYPART_ID.get(bodypart) if bodypart else None,
+            "bodypart_name": bodypart,
+            "tdeed_frame": int(round(time_seconds * fps)),
+            "tdeed_confidence": None,
+            "on_pitch": (
+                start_x is not None
+                and start_y is not None
+                and 0 <= start_x <= 105
+                and 0 <= start_y <= 68
+            ),
+            "review_status": text_or_none(payload.get("review_status")) or "fixed",
+            "operator_note": text_or_none(payload.get("note")) or "افزوده توسط اپراتور",
+            "event_source": "operator",
+        }
+    )
+    frame = pd.concat([frame, pd.DataFrame([row])], ignore_index=True)
+    frame = renumber_actions(frame)
+    frame.to_excel(workbook, sheet_name="actions", index=False)
+    events = load_events(stem)
+    added_id = None
+    for item in events:
+        if (
+            abs((item.get("time") or 0) - time_seconds) < 0.001
+            and item.get("type") == type_name
+            and item.get("source") == "operator"
+        ):
+            added_id = item["id"]
+    if added_id is None and events:
+        # fallback: closest new operator row by time
+        candidates = [item for item in events if item.get("source") == "operator"]
+        if candidates:
+            added_id = min(candidates, key=lambda item: abs((item.get("time") or 0) - time_seconds))["id"]
+    return events, added_id
+
+
+def delete_event(stem, action_id):
+    workbook, frame = read_actions_frame(stem)
+    action_id = int_or_none(action_id)
+    if action_id is None:
+        raise ValueError("bad id")
+    if "action_id" not in frame.columns:
+        raise ValueError("missing action_id")
+    before = len(frame)
+    keep = []
+    for index, row in frame.iterrows():
+        row_id = int_or_none(row.get("action_id"))
+        if row_id is None:
+            row_id = int(index)
+        if row_id != action_id:
+            keep.append(index)
+    if len(keep) == before:
+        raise ValueError("event not found")
+    frame = frame.loc[keep].reset_index(drop=True)
+    frame = renumber_actions(frame)
     frame.to_excel(workbook, sheet_name="actions", index=False)
     return load_events(stem)
 
@@ -586,6 +747,12 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/clips/") and path.endswith("/review"):
             self.handle_save_review(path[len("/api/clips/"):-len("/review")])
             return
+        if path.startswith("/api/clips/") and path.endswith("/events/add"):
+            self.handle_add_event(path[len("/api/clips/"):-len("/events/add")])
+            return
+        if path.startswith("/api/clips/") and path.endswith("/events/delete"):
+            self.handle_delete_event(path[len("/api/clips/"):-len("/events/delete")])
+            return
         self.send_json(404, {"ok": False, "message": "پیدا نشد."})
 
     def handle_bind_source(self, raw_stem):
@@ -632,6 +799,50 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
             self.send_json(400, {"ok": False, "message": "اصلاحات ذخیره نشد."})
             say(f"REVIEW {stem} {exc}")
+            return
+        self.send_json(200, {"ok": True, "events": events})
+
+    def handle_add_event(self, raw_stem):
+        stem = safe_stem(raw_stem.strip("/"))
+        if stem is None:
+            self.send_json(404, {"ok": False, "message": "این اجرا پیدا نشد."})
+            return
+        kind = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if kind != "application/json" or length <= 0 or length > 65536:
+            self.send_json(400, {"ok": False, "message": "ایونت جدید خوانده نشد."})
+            return
+        try:
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            events, added_id = add_manual_event(stem, payload if isinstance(payload, dict) else {})
+        except FileNotFoundError:
+            self.send_json(404, {"ok": False, "message": "جدول ایونت‌ها پیدا نشد."})
+            return
+        except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            self.send_json(400, {"ok": False, "message": "ایونت جدید ذخیره نشد."})
+            say(f"ADD {stem} {exc}")
+            return
+        self.send_json(200, {"ok": True, "events": events, "added_id": added_id})
+
+    def handle_delete_event(self, raw_stem):
+        stem = safe_stem(raw_stem.strip("/"))
+        if stem is None:
+            self.send_json(404, {"ok": False, "message": "این اجرا پیدا نشد."})
+            return
+        kind = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if kind != "application/json" or length <= 0 or length > 8192:
+            self.send_json(400, {"ok": False, "message": "درخواست حذف خوانده نشد."})
+            return
+        try:
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            events = delete_event(stem, payload.get("id"))
+        except FileNotFoundError:
+            self.send_json(404, {"ok": False, "message": "جدول ایونت‌ها پیدا نشد."})
+            return
+        except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            self.send_json(400, {"ok": False, "message": "ایونت حذف نشد."})
+            say(f"DELETE {stem} {exc}")
             return
         self.send_json(200, {"ok": True, "events": events})
 

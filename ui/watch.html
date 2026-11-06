@@ -248,7 +248,19 @@
       background: rgba(232, 148, 58, 0.18);
       border-color: rgba(232, 148, 58, 0.55);
     }
+    .toolbar button.danger, .form button.danger {
+      background: rgba(226, 59, 59, 0.16);
+      border-color: rgba(226, 59, 59, 0.55);
+    }
     .toolbar button:disabled, .form button:disabled { opacity: 0.45; cursor: default; }
+    .badge-manual {
+      display: inline-block;
+      margin-inline-start: 4px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(47, 109, 255, 0.28);
+    }
     .table-wrap { max-height: 340px; overflow: auto; border-radius: 8px; }
     table.events {
       width: 100%;
@@ -340,6 +352,8 @@
             <option value="pending">اول بررسی‌نشده‌ها</option>
           </select>
           <label for="filterLow"><input type="checkbox" id="filterLow"> فقط اطمینان زیر ۵۰٪</label>
+          <button type="button" id="addEvent">افزودن در زمان ویدیو</button>
+          <button type="button" id="deleteEvent" class="danger">حذف ایونت</button>
         </div>
         <div class="table-wrap">
           <table class="events">
@@ -361,7 +375,10 @@
       <section class="card">
         <h2>فرم اصلاح ایونت</h2>
         <form class="form" id="reviewForm">
-          <p class="hint">مدل فقط پیشنهاد می‌دهد. فیلدهای خالی مثل نتیجه و شماره پیراهن را اپراتور پر می‌کند.</p>
+          <p class="hint">مدل فقط پیشنهاد می‌دهد. برای ایونت جاافتاده «افزودن در زمان ویدیو» را بزن. روی مینی‌مپ کلیک کن تا مختصات همین ایونت عوض شود.</p>
+          <div class="row"><label for="fieldTime">زمان (ثانیه)</label><input id="fieldTime" type="number" min="0" step="0.01" dir="ltr"></div>
+          <div class="row"><label for="fieldX">X</label><input id="fieldX" type="number" step="0.1" dir="ltr" placeholder="۰ تا ۱۰۵"></div>
+          <div class="row"><label for="fieldY">Y</label><input id="fieldY" type="number" step="0.1" dir="ltr" placeholder="۰ تا ۶۸"></div>
           <div class="row"><label for="fieldType">نوع</label>
             <select id="fieldType">
               <option value="PASS">پاس</option>
@@ -416,6 +433,7 @@
           <div class="actions">
             <button type="submit" id="saveOne">ذخیره این ایونت</button>
             <button type="button" id="saveAll">ذخیره همه تغییرها</button>
+            <button type="button" id="deleteEventForm" class="danger">حذف ایونت</button>
             <span id="saveMsg" class="hint"></span>
           </div>
         </form>
@@ -453,6 +471,9 @@
     const sortBy = document.querySelector("#sortBy");
     const filterLow = document.querySelector("#filterLow");
     const fieldType = document.querySelector("#fieldType");
+    const fieldTime = document.querySelector("#fieldTime");
+    const fieldX = document.querySelector("#fieldX");
+    const fieldY = document.querySelector("#fieldY");
     const fieldResult = document.querySelector("#fieldResult");
     const fieldBodypart = document.querySelector("#fieldBodypart");
     const fieldJersey = document.querySelector("#fieldJersey");
@@ -462,6 +483,7 @@
     const qualityHint = document.querySelector("#qualityHint");
     const saveMsg = document.querySelector("#saveMsg");
     const reviewForm = document.querySelector("#reviewForm");
+    const mapEl = document.querySelector("#map");
 
     let events = [];
     let current = 0;
@@ -561,11 +583,14 @@
         const row = document.createElement("tr");
         const level = confidenceLevel(item.confidence);
         row.className = (index === current ? "active" : "") + (level === "low" ? " low" : "");
+        const manual = item.source === "operator"
+          ? " <span class=\"badge-manual\">دستی</span>"
+          : "";
         row.innerHTML =
           "<td>" + fa(index + 1) + "</td>" +
           "<td dir=\"ltr\">" + clockText(item.time) + "</td>" +
-          "<td>" + (NAMES[item.type] || item.type || "—") + "</td>" +
-          "<td><span class=\"conf " + level + "\">" + confidenceText(item.confidence) + "</span></td>" +
+          "<td>" + (NAMES[item.type] || item.type || "—") + manual + "</td>" +
+          "<td><span class=\"conf " + level + "\">" + (item.source === "operator" ? "دستی" : confidenceText(item.confidence)) + "</span></td>" +
           "<td>" + (item.result || "—") + "</td>" +
           "<td>" + (item.jersey === null || item.jersey === undefined ? "—" : fa(item.jersey)) + "</td>" +
           "<td>" + (STATUS_FA[item.review_status] || item.review_status || "بررسی") + "</td>";
@@ -580,6 +605,9 @@
       filling = true;
       ensureTypeOption(item.type);
       fieldType.value = item.type || "PASS";
+      fieldTime.value = item.time === null || item.time === undefined ? "" : item.time;
+      fieldX.value = item.x === null || item.x === undefined ? "" : item.x;
+      fieldY.value = item.y === null || item.y === undefined ? "" : item.y;
       fieldResult.value = item.result || "";
       fieldBodypart.value = item.bodypart || "";
       fieldJersey.value = item.jersey === null || item.jersey === undefined ? "" : item.jersey;
@@ -587,6 +615,7 @@
       fieldStatus.value = item.review_status || "pending";
       fieldNote.value = item.note || "";
       const hints = [];
+      if (item.source === "operator") hints.push("این ایونت دستی اضافه شده");
       if (item.confidence !== null && item.confidence !== undefined) {
         hints.push("اطمینان مدل: " + confidenceText(item.confidence));
       }
@@ -603,6 +632,9 @@
       const item = events[current];
       if (!item || filling) return;
       item.type = fieldType.value || item.type;
+      item.time = fieldTime.value === "" ? item.time : Number(fieldTime.value);
+      item.x = fieldX.value === "" ? null : Number(fieldX.value);
+      item.y = fieldY.value === "" ? null : Number(fieldY.value);
       item.result = fieldResult.value || null;
       item.bodypart = fieldBodypart.value || null;
       item.jersey = fieldJersey.value === "" ? null : Number(fieldJersey.value);
@@ -612,6 +644,22 @@
       dirty.add(item.id);
     }
 
+    function editPayload(item) {
+      return {
+        id: item.id,
+        type: item.type,
+        time: item.time,
+        x: item.x,
+        y: item.y,
+        result: item.result,
+        bodypart: item.bodypart,
+        jersey: item.jersey,
+        team: item.team,
+        review_status: item.review_status,
+        note: item.note,
+      };
+    }
+
     async function saveEdits(onlyCurrent) {
       if (!clipStem) return;
       readFormIntoCurrent();
@@ -619,28 +667,10 @@
         events: events
           .filter((item) => !onlyCurrent || item.id === events[current].id)
           .filter((item) => dirty.has(item.id) || (onlyCurrent && item.id === events[current].id))
-          .map((item) => ({
-            id: item.id,
-            type: item.type,
-            result: item.result,
-            bodypart: item.bodypart,
-            jersey: item.jersey,
-            team: item.team,
-            review_status: item.review_status,
-            note: item.note,
-          })),
+          .map(editPayload),
       };
-      if (!payload.events.length && onlyCurrent) {
-        payload.events = [{
-          id: events[current].id,
-          type: events[current].type,
-          result: events[current].result,
-          bodypart: events[current].bodypart,
-          jersey: events[current].jersey,
-          team: events[current].team,
-          review_status: events[current].review_status,
-          note: events[current].note,
-        }];
+      if (!payload.events.length && onlyCurrent && events[current]) {
+        payload.events = [editPayload(events[current])];
       }
       saveMsg.textContent = "در حال ذخیره…";
       const response = await fetch("/api/clips/" + encodeURIComponent(clipStem) + "/review", {
@@ -653,9 +683,97 @@
         saveMsg.textContent = data.message || "ذخیره نشد.";
         return;
       }
+      const selectedId = events[current] ? events[current].id : null;
       events = data.events || events;
       dirty.clear();
+      if (selectedId !== null) {
+        const nextIndex = events.findIndex((item) => item.id === selectedId);
+        current = nextIndex >= 0 ? nextIndex : Math.min(current, Math.max(0, events.length - 1));
+      }
       saveMsg.textContent = "ذخیره شد.";
+      draw();
+    }
+
+    async function addEventAtVideo() {
+      if (!clipStem) return;
+      readFormIntoCurrent();
+      const time = Number.isFinite(video.currentTime) ? video.currentTime : Number(fieldTime.value || 0);
+      const point = ballAt(time);
+      const payload = {
+        time: Math.round(time * 100) / 100,
+        type: fieldType.value || "PASS",
+        team: fieldTeam.value === "" ? null : Number(fieldTeam.value),
+        jersey: fieldJersey.value === "" ? null : Number(fieldJersey.value),
+        result: fieldResult.value || null,
+        bodypart: fieldBodypart.value || null,
+        note: fieldNote.value.trim() || "افزوده توسط اپراتور",
+        review_status: "fixed",
+        x: point ? point.x : (fieldX.value === "" ? null : Number(fieldX.value)),
+        y: point ? point.y : (fieldY.value === "" ? null : Number(fieldY.value)),
+      };
+      saveMsg.textContent = "در حال افزودن…";
+      const response = await fetch("/api/clips/" + encodeURIComponent(clipStem) + "/events/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        saveMsg.textContent = data.message || "افزوده نشد.";
+        return;
+      }
+      events = data.events || events;
+      dirty.clear();
+      if (data.added_id !== null && data.added_id !== undefined) {
+        const nextIndex = events.findIndex((item) => item.id === data.added_id);
+        current = nextIndex >= 0 ? nextIndex : current;
+      } else {
+        current = Math.max(0, events.length - 1);
+      }
+      saveMsg.textContent = "ایونت دستی اضافه شد.";
+      draw();
+      go(current);
+    }
+
+    async function deleteCurrentEvent() {
+      if (!clipStem || !events[current]) return;
+      const item = events[current];
+      const label = (NAMES[item.type] || item.type || "ایونت") + " @ " + clockText(item.time);
+      if (!window.confirm("این ایونت حذف شود؟\n" + label)) return;
+      saveMsg.textContent = "در حال حذف…";
+      const response = await fetch("/api/clips/" + encodeURIComponent(clipStem) + "/events/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        saveMsg.textContent = data.message || "حذف نشد.";
+        return;
+      }
+      events = data.events || [];
+      dirty.clear();
+      current = Math.min(current, Math.max(0, events.length - 1));
+      saveMsg.textContent = events.length ? "حذف شد." : "همه ایونت‌ها حذف شدند.";
+      if (!events.length) {
+        renderList();
+        return;
+      }
+      draw();
+      go(current);
+    }
+
+    function setCoordsFromMap(event) {
+      if (!events[current]) return;
+      const rect = mapEl.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const x = clamp(((event.clientX - rect.left) / rect.width) * 105, 0, 105);
+      const y = clamp((1 - (event.clientY - rect.top) / rect.height) * 68, 0, 68);
+      events[current].x = Math.round(x * 10) / 10;
+      events[current].y = Math.round(y * 10) / 10;
+      fieldX.value = events[current].x;
+      fieldY.value = events[current].y;
+      dirty.add(events[current].id);
       draw();
     }
 
@@ -887,8 +1005,8 @@
 
     sortBy.addEventListener("change", renderList);
     filterLow.addEventListener("change", renderList);
-    [fieldType, fieldResult, fieldBodypart, fieldJersey, fieldTeam, fieldStatus, fieldNote].forEach((field) => {
-      field.addEventListener("change", () => { readFormIntoCurrent(); renderList(); });
+    [fieldType, fieldTime, fieldX, fieldY, fieldResult, fieldBodypart, fieldJersey, fieldTeam, fieldStatus, fieldNote].forEach((field) => {
+      field.addEventListener("change", () => { readFormIntoCurrent(); renderList(); draw(); });
       field.addEventListener("input", () => { readFormIntoCurrent(); });
     });
     reviewForm.addEventListener("submit", (event) => {
@@ -897,6 +1015,19 @@
     });
     document.querySelector("#saveAll").addEventListener("click", () => {
       saveEdits(false).catch(() => { saveMsg.textContent = "ذخیره نشد."; });
+    });
+    document.querySelector("#addEvent").addEventListener("click", () => {
+      addEventAtVideo().catch(() => { saveMsg.textContent = "افزوده نشد."; });
+    });
+    document.querySelector("#deleteEvent").addEventListener("click", () => {
+      deleteCurrentEvent().catch(() => { saveMsg.textContent = "حذف نشد."; });
+    });
+    document.querySelector("#deleteEventForm").addEventListener("click", () => {
+      deleteCurrentEvent().catch(() => { saveMsg.textContent = "حذف نشد."; });
+    });
+    mapEl.addEventListener("click", (event) => {
+      if (event.target.closest(".mark")) return;
+      setCoordsFromMap(event);
     });
 
     const stem = params().get("stem");
