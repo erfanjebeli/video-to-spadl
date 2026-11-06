@@ -1,0 +1,10 @@
+{
+    "predictions": [
+        {
+            "frame": 132,
+            "label": "DRIVE",
+            "confidence": 0.34066879749298096,
+            "time_seconds": 5.28
+        }
+    ]
+}

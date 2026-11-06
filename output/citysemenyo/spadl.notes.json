@@ -1,0 +1,10 @@
+{
+  "origin": "image_left_goal_is_x0",
+  "mirrored": false,
+  "eagle_team_side": {},
+  "frame_width_used": 1280,
+  "team_name_meaning": "team_0 and team_1 are Eagle's two shirt-color groups. team_side is left or right only when a goalkeeper shows which goal that group defends.",
+  "player_id_meaning": "Eagle track id of the person closest to the ball. Shirt number is empty.",
+  "fps": 60.0,
+  "frames": 610
+}

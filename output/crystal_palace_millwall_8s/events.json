@@ -1,0 +1,22 @@
+{
+    "predictions": [
+        {
+            "frame": 240,
+            "label": "HIGH PASS",
+            "confidence": 0.5145482420921326,
+            "time_seconds": 2.0
+        },
+        {
+            "frame": 370,
+            "label": "THROW IN",
+            "confidence": 0.3520369827747345,
+            "time_seconds": 3.0833333333333335
+        },
+        {
+            "frame": 374,
+            "label": "HIGH PASS",
+            "confidence": 0.3453018069267273,
+            "time_seconds": 3.1166666666666667
+        }
+    ]
+}

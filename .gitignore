@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.lnk
+~$*
+**/source.json
+ui/_watch_check.js
+batch/clips/
+batch/raw/
+wide_clips/
+*.mp4
+*.webm
+*.ogv
+*.mkv
+*.mov
+*.avi

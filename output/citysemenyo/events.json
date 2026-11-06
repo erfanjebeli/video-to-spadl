@@ -1,0 +1,70 @@
+{
+    "predictions": [
+        {
+            "frame": 0,
+            "label": "DRIVE",
+            "confidence": 0.328125,
+            "time_seconds": 0.0
+        },
+        {
+            "frame": 154,
+            "label": "PASS",
+            "confidence": 0.51141357421875,
+            "time_seconds": 2.566666666666667
+        },
+        {
+            "frame": 160,
+            "label": "SHOT",
+            "confidence": 0.37615966796875,
+            "time_seconds": 2.6666666666666665
+        },
+        {
+            "frame": 208,
+            "label": "OUT",
+            "confidence": 0.367919921875,
+            "time_seconds": 3.466666666666667
+        },
+        {
+            "frame": 280,
+            "label": "DRIVE",
+            "confidence": 0.300811767578125,
+            "time_seconds": 4.666666666666667
+        },
+        {
+            "frame": 334,
+            "label": "DRIVE",
+            "confidence": 0.3154296875,
+            "time_seconds": 5.566666666666666
+        },
+        {
+            "frame": 416,
+            "label": "PASS",
+            "confidence": 0.44342041015625,
+            "time_seconds": 6.933333333333334
+        },
+        {
+            "frame": 466,
+            "label": "SHOT",
+            "confidence": 0.9278971552848816,
+            "time_seconds": 7.766666666666667
+        },
+        {
+            "frame": 490,
+            "label": "BALL PLAYER BLOCK",
+            "confidence": 0.3721923828125,
+            "time_seconds": 8.166666666666666
+        },
+        {
+            "frame": 498,
+            "label": "GOAL",
+            "confidence": 0.698974609375,
+            "time_seconds": 8.3
+        },
+        {
+            "frame": 516,
+            "label": "OUT",
+            "confidence": 0.3004150390625,
+            "time_seconds": 8.6
+        }
+    ]
+}

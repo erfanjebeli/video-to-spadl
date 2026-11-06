@@ -1,0 +1,10 @@
+{
+    "predictions": [
+        {
+            "frame": 120,
+            "label": "PASS",
+            "confidence": 0.7813595533370972,
+            "time_seconds": 4.8
+        }
+    ]
+}

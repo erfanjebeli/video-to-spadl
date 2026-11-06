@@ -1,0 +1,28 @@
+{
+    "predictions": [
+        {
+            "frame": 20,
+            "label": "PASS",
+            "confidence": 0.8316272497177124,
+            "time_seconds": 0.8
+        },
+        {
+            "frame": 92,
+            "label": "SHOT",
+            "confidence": 0.9796841144561768,
+            "time_seconds": 3.68
+        },
+        {
+            "frame": 116,
+            "label": "BALL PLAYER BLOCK",
+            "confidence": 0.3814016282558441,
+            "time_seconds": 4.64
+        },
+        {
+            "frame": 142,
+            "label": "OUT",
+            "confidence": 0.6408569812774658,
+            "time_seconds": 5.68
+        }
+    ]
+}

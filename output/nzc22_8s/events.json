@@ -1,0 +1,40 @@
+{
+    "predictions": [
+        {
+            "frame": 126,
+            "label": "PASS",
+            "confidence": 0.36868470907211304,
+            "time_seconds": 5.04
+        },
+        {
+            "frame": 132,
+            "label": "HIGH PASS",
+            "confidence": 0.39923232793807983,
+            "time_seconds": 5.28
+        },
+        {
+            "frame": 170,
+            "label": "THROW IN",
+            "confidence": 0.5234439969062805,
+            "time_seconds": 6.8
+        },
+        {
+            "frame": 176,
+            "label": "PASS",
+            "confidence": 0.34339451789855957,
+            "time_seconds": 7.04
+        },
+        {
+            "frame": 178,
+            "label": "HIGH PASS",
+            "confidence": 0.508465051651001,
+            "time_seconds": 7.12
+        },
+        {
+            "frame": 186,
+            "label": "CROSS",
+            "confidence": 0.7873284220695496,
+            "time_seconds": 7.44
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "predictions": [
+        {
+            "frame": 134,
+            "label": "HIGH PASS",
+            "confidence": 0.7421567440032959,
+            "time_seconds": 5.36
+        },
+        {
+            "frame": 182,
+            "label": "PASS",
+            "confidence": 0.5121983289718628,
+            "time_seconds": 7.28
+        },
+        {
+            "frame": 186,
+            "label": "HIGH PASS",
+            "confidence": 0.4705963730812073,
+            "time_seconds": 7.44
+        },
+        {
+            "frame": 188,
+            "label": "CROSS",
+            "confidence": 0.3241347670555115,
+            "time_seconds": 7.52
+        }
+    ]
+}

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ایونت‌ها روی ویدیو</title>
+  <style>
+    @font-face {
+      font-family: "Vazirmatn";
+      src: url("/fonts/Vazirmatn-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Vazirmatn";
+      src: url("/fonts/Vazirmatn-SemiBold.woff2") format("woff2");
+      font-weight: 600;
+      font-display: swap;
+    }
+
+    :root {
+      --ink: #101411;
+      --chalk: #f3ecdc;
+      --amber: #e8943a;
+      --line: rgba(243, 236, 220, 0.72);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      min-height: 100vh;
+      color: var(--chalk);
+      background: var(--ink);
+      font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 22px 8px;
+    }
+    header a { color: var(--chalk); }
+    h1 { margin: 0; font-size: 20px; font-weight: 600; }
+
+    .stage {
+      position: relative;
+      width: min(1180px, calc(100% - 32px));
+      margin: 8px auto 24px;
+      background: #000;
+    }
+    video { width: 100%; display: block; background: #000; }
+
+    .jump {
+      position: absolute;
+      top: 42%;
+      z-index: 2;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--chalk);
+      color: var(--chalk);
+      background: rgba(16, 20, 17, 0.72);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .jump.prev { left: 12px; }
+    .jump.next { right: 12px; }
+    .jump:disabled { opacity: 0.35; cursor: default; }
+    .jump:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+    .caption {
+      position: absolute;
+      left: 50%;
+      bottom: 58px;
+      z-index: 2;
+      transform: translateX(-50%);
+      max-width: min(640px, calc(100% - 120px));
+      padding: 8px 14px;
+      text-align: center;
+      background: rgba(16, 20, 17, 0.82);
+      border: 1px solid rgba(243, 236, 220, 0.35);
+    }
+    .caption p { margin: 0; }
+    .caption .meta { display: flex; justify-content: center; gap: 10px; }
+    .caption strong { display: block; font-size: 18px; }
+    .caption span { color: rgba(243, 236, 220, 0.78); font-size: 13px; }
+
+    .map {
+      position: absolute;
+      left: 14px;
+      bottom: 58px;
+      z-index: 2;
+      width: min(250px, 34%);
+      aspect-ratio: 105 / 68;
+      background: rgba(16, 20, 17, 0.88);
+      border: 1px solid rgba(243, 236, 220, 0.45);
+    }
+    .map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .map svg rect, .map svg line, .map svg circle { fill: none; stroke: var(--line); stroke-width: 0.6; }
+    .map svg line.pass { stroke: #e8943a; stroke-width: 0.9; stroke-dasharray: 1.35 1.05; stroke-linecap: round; }
+    #ball {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 0 2px #e8943a;
+      transform: translate(-50%, 50%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .marks { position: absolute; inset: 0; }
+    .mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      transform: translate(-50%, 50%);
+      background: var(--chalk);
+      color: #1b140e;
+      font: 600 10px/14px "Vazirmatn", Tahoma, sans-serif;
+      cursor: pointer;
+    }
+    .mark.off { background: transparent; box-shadow: inset 0 0 0 2px var(--amber); }
+    .mark.now { width: 22px; height: 22px; background: var(--amber); font-size: 11px; line-height: 22px; z-index: 1; }
+    .mark:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
+
+    .empty, .choices { width: min(720px, calc(100% - 32px)); margin: 24px auto; font-size: 18px; }
+    .choices a { color: var(--amber); }
+    .choices li { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">بازگشت</a>
+    <h1 id="title">ایونت‌ها روی ویدیو</h1>
+  </header>
+  <p class="empty" id="empty" hidden></p>
+  <ul class="choices" id="choices" hidden></ul>
+  <div class="stage" id="stage" hidden>
+    <video id="video" controls playsinline></video>
+    <button type="button" class="jump prev" id="prev">قبلی</button>
+    <button type="button" class="jump next" id="next">بعدی</button>
+    <div class="map" id="map">
+      <svg viewBox="0 0 105 68" aria-hidden="true">
+        <rect x="0.8" y="0.8" width="103.4" height="66.4"></rect>
+        <line x1="52.5" y1="0.8" x2="52.5" y2="67.2"></line>
+        <circle cx="52.5" cy="34" r="9.15"></circle>
+        <rect x="0.8" y="13.84" width="16.5" height="40.32"></rect>
+        <rect x="87.7" y="13.84" width="16.5" height="40.32"></rect>
+        <line x1="1.6" y1="30.34" x2="1.6" y2="37.66" stroke-width="1.4"></line>
+        <line x1="103.4" y1="30.34" x2="103.4" y2="37.66" stroke-width="1.4"></line>
+        <g id="passes"></g>
+      </svg>
+      <div class="marks" id="marks"></div>
+      <div id="ball" hidden></div>
+    </div>
+    <div class="caption" id="caption">
+      <p class="meta"><span id="count"></span><span id="clock" dir="ltr"></span></p>
+      <strong id="kind"></strong>
+      <span id="place" dir="ltr"></span>
+    </div>
+  </div>
+  <script>
+    const NAMES = {
+      PASS: "پاس",
+      CROSS: "سانتر",
+      "THROW IN": "پرتاب اوت",
+      SHOT: "شوت",
+      GOAL: "گل",
+      DRIVE: "حمل توپ",
+      "BALL PLAYER BLOCK": "قطع توپ",
+      "PLAYER SUCCESSFUL TACKLE": "تکل موفق",
+    };
+
+    const video = document.querySelector("#video");
+    const stage = document.querySelector("#stage");
+    const empty = document.querySelector("#empty");
+    const choices = document.querySelector("#choices");
+    const title = document.querySelector("#title");
+    const passes = document.querySelector("#passes");
+    const marks = document.querySelector("#marks");
+    const ball = document.querySelector("#ball");
+    const kind = document.querySelector("#kind");
+    const clock = document.querySelector("#clock");
+    const place = document.querySelector("#place");
+    const prev = document.querySelector("#prev");
+    const next = document.querySelector("#next");
+
+    let events = [];
+    let current = 0;
+    let seeking = false;
+
+    function params() {
+      return new URLSearchParams(location.search);
+    }
+
+    function labelOf(type) {
+      if (!type) return "ایونت";
+      return NAMES[type] ? NAMES[type] + " · " + type : type;
+    }
+
+    function fa(value) {
+      return String(value).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[digit]);
+    }
+
+    function clockText(seconds) {
+      const value = Math.max(0, Number(seconds) || 0);
+      const minutes = Math.floor(value / 60);
+      const rest = (value - minutes * 60).toFixed(1).padStart(4, "0");
+      return minutes + ":" + rest;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function isPass(item) {
+      return item && (item.type === "PASS" || item.type === "CROSS");
+    }
+
+    function destination(index) {
+      const next = events[index + 1];
+      if (!next || next.x === null || next.y === null) return null;
+      return { x: next.x, y: next.y, until: next.time };
+    }
+
+    function ballAt(time) {
+      const index = indexAt(time);
+      const item = events[index];
+      if (!item || item.x === null || item.y === null) return null;
+      const end = isPass(item) ? destination(index) : null;
+      if (!end || end.until <= item.time) return { x: item.x, y: item.y };
+      const progress = clamp((time - item.time) / (end.until - item.time), 0, 1);
+      return {
+        x: item.x + (end.x - item.x) * progress,
+        y: item.y + (end.y - item.y) * progress,
+      };
+    }
+
+    function placeBall(point) {
+      if (!point) {
+        ball.hidden = true;
+        return;
+      }
+      const x = clamp(point.x, 0, 105);
+      const y = clamp(point.y, 0, 68);
+      ball.hidden = false;
+      ball.style.left = (x / 105) * 100 + "%";
+      ball.style.bottom = (y / 68) * 100 + "%";
+    }
+
+    function indexAt(time) {
+      let found = 0;
+      for (let i = 0; i < events.length; i += 1) {
+        if (events[i].time <= time + 0.04) found = i;
+      }
+      return found;
+    }
+
+    function shownTime(time) {
+      if (Number.isFinite(time)) return time;
+      if (Number.isFinite(video.currentTime)) return video.currentTime;
+      return events[current] ? events[current].time : 0;
+    }
+
+    function drawPasses(time) {
+      passes.replaceChildren();
+      time = shownTime(time);
+      events.forEach((item, index) => {
+        if (!isPass(item) || item.time > time + 0.04) return;
+        if (item.x === null || item.y === null) return;
+        const end = destination(index);
+        if (!end) return;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("class", "pass");
+        line.setAttribute("x1", clamp(item.x, 0, 105));
+        line.setAttribute("y1", 68 - clamp(item.y, 0, 68));
+        line.setAttribute("x2", clamp(end.x, 0, 105));
+        line.setAttribute("y2", 68 - clamp(end.y, 0, 68));
+        passes.appendChild(line);
+      });
+    }
+
+    function draw(time) {
+      time = shownTime(time);
+      const event = events[current];
+      marks.replaceChildren();
+      events.forEach((item, index) => {
+        if (item.x === null || item.y === null) return;
+        const off = item.x < 0 || item.x > 105 || item.y < 0 || item.y > 68;
+        const x = clamp(item.x, 0, 105);
+        const y = clamp(item.y, 0, 68);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mark" + (index === current ? " now" : "") + (off ? " off" : "");
+        button.style.left = (x / 105) * 100 + "%";
+        button.style.bottom = (y / 68) * 100 + "%";
+        button.textContent = index === current ? String(index + 1) : "";
+        button.setAttribute("aria-label", labelOf(item.type) + " " + clockText(item.time));
+        button.addEventListener("click", () => go(index));
+        marks.appendChild(button);
+      });
+      drawPasses(time);
+      const point = ballAt(time);
+      placeBall(point);
+      if (!event) return;
+      document.querySelector("#count").textContent = "ایونت " + fa(current + 1) + " از " + fa(events.length);
+      clock.textContent = clockText(time);
+      kind.textContent = labelOf(event.type);
+      place.textContent = point ? "توپ " + point.x.toFixed(1) + " , " + point.y.toFixed(1) : "مختصات توپ خالی است";
+      prev.disabled = current <= 0;
+      next.disabled = current >= events.length - 1;
+    }
+
+    function follow(time) {
+      const point = ballAt(time);
+      placeBall(point);
+      if (point && isPass(events[current])) {
+        place.textContent = "توپ " + point.x.toFixed(1) + " , " + point.y.toFixed(1);
+      }
+      drawPasses();
+    }
+
+    function go(index) {
+      current = Math.max(0, Math.min(events.length - 1, index));
+      const target = events[current].time || 0;
+      if (Math.abs((video.currentTime || 0) - target) < 0.05) {
+        seeking = false;
+        draw();
+        return;
+      }
+      seeking = true;
+      video.currentTime = target;
+      draw(target);
+    }
+
+    prev.addEventListener("click", () => go(current - 1));
+    next.addEventListener("click", () => go(current + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (stage.hidden) return;
+      event.preventDefault();
+      go(current + (event.key === "ArrowRight" ? 1 : -1));
+    }, true);
+    let motion = 0;
+
+    function track() {
+      if (video.paused || video.ended) return;
+      const time = video.currentTime || 0;
+      if (!seeking) {
+        const nextIndex = indexAt(time);
+        if (nextIndex !== current) {
+          current = nextIndex;
+          draw();
+        } else {
+          clock.textContent = clockText(time);
+          follow(time);
+        }
+      }
+      motion = requestAnimationFrame(track);
+    }
+
+    video.addEventListener("play", () => {
+      cancelAnimationFrame(motion);
+      motion = requestAnimationFrame(track);
+    });
+    video.addEventListener("pause", () => cancelAnimationFrame(motion));
+    video.addEventListener("timeupdate", () => {
+      if (seeking || !video.paused) return;
+      const time = video.currentTime || 0;
+      const nextIndex = indexAt(time);
+      if (nextIndex !== current) {
+        current = nextIndex;
+        draw();
+        return;
+      }
+      clock.textContent = clockText(time);
+      follow(time);
+    });
+    video.addEventListener("seeked", () => {
+      seeking = false;
+      current = indexAt(video.currentTime || 0);
+      draw();
+    });
+
+    async function showChoices() {
+      const response = await fetch("/api/clips", { cache: "no-store" });
+      const data = await response.json();
+      choices.hidden = false;
+      data.clips.forEach((clip) => {
+        const item = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = "/watch?stem=" + encodeURIComponent(clip.stem);
+        link.textContent = clip.video_name || clip.stem;
+        item.appendChild(link);
+        choices.appendChild(item);
+      });
+      if (!data.clips.length) {
+        empty.hidden = false;
+        empty.textContent = "هنوز ایونتی ساخته نشده. اول یک ویدیو را اجرا کن.";
+      }
+    }
+
+    async function showClip(stem) {
+      const hinted = params().get("video");
+      if (hinted) {
+        await fetch("/api/clips/" + encodeURIComponent(stem) + "/source", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: hinted }),
+        });
+      }
+      const response = await fetch("/api/clips/" + encodeURIComponent(stem), { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) {
+        empty.hidden = false;
+        empty.textContent = data.message || "این اجرا پیدا نشد.";
+        return;
+      }
+      events = data.events || [];
+      title.textContent = data.video_name || stem;
+      if (!data.media) {
+        empty.hidden = false;
+        empty.textContent = "ایونت‌ها ذخیره شده‌اند. از صفحه قبل همان فایل ویدیو را انتخاب کن و دوباره نمایش را بزن. لازم نیست مدل را از نو اجرا کنی.";
+        return;
+      }
+      stage.hidden = false;
+      video.src = data.media;
+      current = 0;
+      draw();
+    }
+
+    const stem = params().get("stem");
+    if (stem) showClip(stem).catch(() => { empty.hidden = false; empty.textContent = "ارتباط با برنامه قطع شد."; });
+    else showChoices().catch(() => { empty.hidden = false; empty.textContent = "ارتباط با برنامه قطع شد."; });
+  </script>
+</body>
+</html>

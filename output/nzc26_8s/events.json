@@ -1,0 +1,22 @@
+{
+    "predictions": [
+        {
+            "frame": 140,
+            "label": "THROW IN",
+            "confidence": 0.4102529287338257,
+            "time_seconds": 5.6
+        },
+        {
+            "frame": 178,
+            "label": "THROW IN",
+            "confidence": 0.30975762009620667,
+            "time_seconds": 7.12
+        },
+        {
+            "frame": 188,
+            "label": "HEADER",
+            "confidence": 0.5724577903747559,
+            "time_seconds": 7.52
+        }
+    ]
+}

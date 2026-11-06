@@ -1,0 +1,40 @@
+{
+    "predictions": [
+        {
+            "frame": 48,
+            "label": "PASS",
+            "confidence": 0.4433210492134094,
+            "time_seconds": 1.92
+        },
+        {
+            "frame": 140,
+            "label": "SHOT",
+            "confidence": 0.8519068360328674,
+            "time_seconds": 5.6
+        },
+        {
+            "frame": 164,
+            "label": "SHOT",
+            "confidence": 0.3055737018585205,
+            "time_seconds": 6.56
+        },
+        {
+            "frame": 180,
+            "label": "BALL PLAYER BLOCK",
+            "confidence": 0.42594286799430847,
+            "time_seconds": 7.2
+        },
+        {
+            "frame": 244,
+            "label": "OUT",
+            "confidence": 0.523263156414032,
+            "time_seconds": 9.76
+        },
+        {
+            "frame": 266,
+            "label": "OUT",
+            "confidence": 0.36313453627129394,
+            "time_seconds": 10.64
+        }
+    ]
+}

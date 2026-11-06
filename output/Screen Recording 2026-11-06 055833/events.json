@@ -1,0 +1,214 @@
+{
+    "predictions": [
+        {
+            "frame": 92,
+            "label": "PASS",
+            "confidence": 0.68408203125,
+            "time_seconds": 3.066666666666667
+        },
+        {
+            "frame": 122,
+            "label": "DRIVE",
+            "confidence": 0.7452799677848816,
+            "time_seconds": 4.066666666666666
+        },
+        {
+            "frame": 156,
+            "label": "PASS",
+            "confidence": 0.34698486328125,
+            "time_seconds": 5.2
+        },
+        {
+            "frame": 180,
+            "label": "PASS",
+            "confidence": 0.888671875,
+            "time_seconds": 6.0
+        },
+        {
+            "frame": 218,
+            "label": "DRIVE",
+            "confidence": 0.5609130859375,
+            "time_seconds": 7.266666666666667
+        },
+        {
+            "frame": 246,
+            "label": "PASS",
+            "confidence": 0.7598876953125,
+            "time_seconds": 8.2
+        },
+        {
+            "frame": 298,
+            "label": "DRIVE",
+            "confidence": 0.35003662109375,
+            "time_seconds": 9.933333333333334
+        },
+        {
+            "frame": 372,
+            "label": "PASS",
+            "confidence": 0.8294677734375,
+            "time_seconds": 12.4
+        },
+        {
+            "frame": 416,
+            "label": "DRIVE",
+            "confidence": 0.7469482421875,
+            "time_seconds": 13.866666666666667
+        },
+        {
+            "frame": 498,
+            "label": "PASS",
+            "confidence": 0.47467041015625,
+            "time_seconds": 16.6
+        },
+        {
+            "frame": 524,
+            "label": "PASS",
+            "confidence": 0.484130859375,
+            "time_seconds": 17.466666666666665
+        },
+        {
+            "frame": 576,
+            "label": "DRIVE",
+            "confidence": 0.6146240234375,
+            "time_seconds": 19.2
+        },
+        {
+            "frame": 604,
+            "label": "PASS",
+            "confidence": 0.83349609375,
+            "time_seconds": 20.133333333333333
+        },
+        {
+            "frame": 624,
+            "label": "DRIVE",
+            "confidence": 0.5216064453125,
+            "time_seconds": 20.8
+        },
+        {
+            "frame": 704,
+            "label": "PASS",
+            "confidence": 0.70947265625,
+            "time_seconds": 23.466666666666665
+        },
+        {
+            "frame": 876,
+            "label": "PASS",
+            "confidence": 0.862548828125,
+            "time_seconds": 29.2
+        },
+        {
+            "frame": 920,
+            "label": "PASS",
+            "confidence": 0.34503173828125,
+            "time_seconds": 30.666666666666668
+        },
+        {
+            "frame": 972,
+            "label": "DRIVE",
+            "confidence": 0.485595703125,
+            "time_seconds": 32.4
+        },
+        {
+            "frame": 992,
+            "label": "HIGH PASS",
+            "confidence": 0.4155120849609375,
+            "time_seconds": 33.06666666666667
+        },
+        {
+            "frame": 994,
+            "label": "PASS",
+            "confidence": 0.39801025390625,
+            "time_seconds": 33.13333333333333
+        },
+        {
+            "frame": 1186,
+            "label": "DRIVE",
+            "confidence": 0.3626708984375,
+            "time_seconds": 39.53333333333333
+        },
+        {
+            "frame": 1244,
+            "label": "PASS",
+            "confidence": 0.50152587890625,
+            "time_seconds": 41.46666666666667
+        },
+        {
+            "frame": 1340,
+            "label": "OUT",
+            "confidence": 0.427001953125,
+            "time_seconds": 44.666666666666664
+        },
+        {
+            "frame": 1364,
+            "label": "OUT",
+            "confidence": 0.723388671875,
+            "time_seconds": 45.46666666666667
+        },
+        {
+            "frame": 1390,
+            "label": "OUT",
+            "confidence": 0.50567626953125,
+            "time_seconds": 46.333333333333336
+        },
+        {
+            "frame": 1654,
+            "label": "DRIVE",
+            "confidence": 0.3488565981388092,
+            "time_seconds": 55.13333333333333
+        },
+        {
+            "frame": 1836,
+            "label": "PASS",
+            "confidence": 0.5433349609375,
+            "time_seconds": 61.2
+        },
+        {
+            "frame": 1940,
+            "label": "PASS",
+            "confidence": 0.5352783203125,
+            "time_seconds": 64.66666666666667
+        },
+        {
+            "frame": 2012,
+            "label": "PASS",
+            "confidence": 0.3948974609375,
+            "time_seconds": 67.06666666666666
+        },
+        {
+            "frame": 2050,
+            "label": "DRIVE",
+            "confidence": 0.323028564453125,
+            "time_seconds": 68.33333333333333
+        },
+        {
+            "frame": 2260,
+            "label": "PASS",
+            "confidence": 0.467437744140625,
+            "time_seconds": 75.33333333333333
+        },
+        {
+            "frame": 2312,
+            "label": "PASS",
+            "confidence": 0.8880208134651184,
+            "time_seconds": 77.06666666666666
+        },
+        {
+            "frame": 2338,
+            "label": "PASS",
+            "confidence": 0.3167724609375,
+            "time_seconds": 77.93333333333334
+        },
+        {
+            "frame": 2398,
+            "label": "DRIVE",
+            "confidence": 0.45751953125,
+            "time_seconds": 79.93333333333334
+        },
+        {
+            "frame": 2426,
+            "label": "PASS",
+            "confidence": 0.46240234375,
+            "time_seconds": 80.86666666666666
+        }
+    ]
+}

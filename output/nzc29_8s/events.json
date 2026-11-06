@@ -1,0 +1,16 @@
+{
+    "predictions": [
+        {
+            "frame": 146,
+            "label": "THROW IN",
+            "confidence": 0.7384679913520813,
+            "time_seconds": 5.84
+        },
+        {
+            "frame": 188,
+            "label": "PASS",
+            "confidence": 0.31558939814567566,
+            "time_seconds": 7.52
+        }
+    ]
+}
