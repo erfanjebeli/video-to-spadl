@@ -212,11 +212,12 @@
     }
     .review {
       display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
       gap: 12px;
       align-items: start;
     }
     .card {
+      min-width: 0;
       background: rgba(16, 20, 17, 0.92);
       border: 1px solid rgba(243, 236, 220, 0.22);
       border-radius: 12px;
@@ -242,7 +243,10 @@
       border: 1px solid rgba(243, 236, 220, 0.28);
       border-radius: 8px;
       padding: 6px 10px;
+      min-width: 0;
+      max-width: 100%;
     }
+    .form select, .form input, .form textarea { width: 100%; }
     .toolbar button, .form button {
       cursor: pointer;
       background: rgba(232, 148, 58, 0.18);
@@ -290,15 +294,126 @@
     .conf.high { background: rgba(56, 160, 90, 0.28); }
     .conf.mid { background: rgba(232, 148, 58, 0.28); }
     .conf.low { background: rgba(226, 59, 59, 0.3); }
-    .form { display: grid; gap: 8px; }
-    .form .row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; }
+    .form { display: grid; gap: 8px; min-width: 0; }
+    .form .row { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; align-items: center; min-width: 0; }
     .form .row label { font-size: 13px; color: rgba(243, 236, 220, 0.78); }
     .form textarea { min-height: 64px; resize: vertical; }
     .form .hint { font-size: 12px; color: rgba(243, 236, 220, 0.62); line-height: 1.5; }
     .form .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .form .actions button { width: auto; }
+    .form .coords-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .form .coords-row > label { grid-column: 1 / -1; font-size: 13px; color: rgba(243, 236, 220, 0.78); }
+    .form .coords-row #editCoords { grid-column: 1 / -1; width: 100%; }
     .caption .conf { margin-inline-start: 6px; }
+    .coord-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow: auto;
+      background: rgba(6, 10, 8, 0.78);
+    }
+    .coord-modal[hidden] { display: none; }
+    .coord-panel {
+      width: min(820px, 96vw);
+      height: calc(100dvh - 24px);
+      max-height: calc(100vh - 24px);
+      background: #121712;
+      border: 1px solid rgba(243, 236, 220, 0.28);
+      border-radius: 14px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+    .coord-panel header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0;
+    }
+    .coord-panel h2 { margin: 0; font-size: 17px; }
+    .coord-panel .meta { font-size: 13px; color: rgba(243, 236, 220, 0.72); }
+    .coord-fit {
+      flex: 1 1 auto;
+      min-height: 0;
+      min-width: 0;
+      display: grid;
+      place-items: center;
+      container-type: size;
+    }
+    .coord-pitch {
+      position: relative;
+      width: min(100cqw, calc(100cqh * 105 / 68));
+      aspect-ratio: 105 / 68;
+      max-height: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      cursor: crosshair;
+      border: 1px solid rgba(236, 245, 232, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      background:
+        linear-gradient(160deg, rgba(8, 18, 12, 0.18), rgba(0, 0, 0, 0.16)),
+        repeating-linear-gradient(90deg, var(--pitch-a) 0 12.5%, var(--pitch-b) 12.5% 25%);
+    }
+    .coord-pitch svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .coord-pitch svg .pitch-line {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 0.55;
+      vector-effect: non-scaling-stroke;
+    }
+    .coord-pitch svg .pitch-fill { fill: rgba(255, 255, 255, 0.03); stroke: none; }
+    .coord-pitch svg .pitch-spot { fill: rgba(236, 245, 232, 0.9); stroke: none; }
+    .coord-pitch svg .goal-line { stroke: rgba(255, 255, 255, 0.92); stroke-width: 1.35; }
+    .coord-pin {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      transform: translate(-50%, 50%);
+      background: var(--amber);
+      box-shadow: 0 0 0 2px #fff, 0 0 0 5px rgba(232, 148, 58, 0.28), 0 2px 8px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .coord-pin.team-0 { background: var(--team-a); }
+    .coord-pin.team-1 { background: var(--team-b); }
+    .coord-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      flex: 0 0 auto;
+    }
+    .coord-actions button {
+      font: inherit;
+      color: var(--chalk);
+      background: rgba(232, 148, 58, 0.18);
+      border: 1px solid rgba(232, 148, 58, 0.55);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .coord-actions button.ghost {
+      background: rgba(0, 0, 0, 0.28);
+      border-color: rgba(243, 236, 220, 0.28);
+    }
     @media (max-width: 920px) {
-      .review { grid-template-columns: 1fr; }
+      .review { grid-template-columns: minmax(0, 1fr); }
+      .form .row { grid-template-columns: minmax(0, 1fr); }
     }
   </style>
 </head>
@@ -375,10 +490,14 @@
       <section class="card">
         <h2>فرم اصلاح ایونت</h2>
         <form class="form" id="reviewForm">
-          <p class="hint">مدل فقط پیشنهاد می‌دهد. برای ایونت جاافتاده «افزودن در زمان ویدیو» را بزن. روی مینی‌مپ کلیک کن تا مختصات همین ایونت عوض شود.</p>
+          <p class="hint">مدل فقط پیشنهاد می‌دهد. برای ایونت جاافتاده «افزودن در زمان ویدیو» را بزن. برای جابه‌جایی نقطه، «ویرایش مختصات» را بزن تا مپ جدا باز شود.</p>
           <div class="row"><label for="fieldTime">زمان (ثانیه)</label><input id="fieldTime" type="number" min="0" step="0.01" dir="ltr"></div>
-          <div class="row"><label for="fieldX">X</label><input id="fieldX" type="number" step="0.1" dir="ltr" placeholder="۰ تا ۱۰۵"></div>
-          <div class="row"><label for="fieldY">Y</label><input id="fieldY" type="number" step="0.1" dir="ltr" placeholder="۰ تا ۶۸"></div>
+          <div class="coords-row">
+            <label for="fieldX">مختصات</label>
+            <input id="fieldX" type="number" step="0.1" dir="ltr" placeholder="X ۰ تا ۱۰۵" aria-label="X">
+            <input id="fieldY" type="number" step="0.1" dir="ltr" placeholder="Y ۰ تا ۶۸" aria-label="Y">
+            <button type="button" id="editCoords">ویرایش مختصات</button>
+          </div>
           <div class="row"><label for="fieldType">نوع</label>
             <select id="fieldType">
               <option value="PASS">پاس</option>
@@ -440,6 +559,42 @@
       </section>
     </div>
   </div>
+  <div class="coord-modal" id="coordModal" hidden>
+    <div class="coord-panel" role="dialog" aria-modal="true" aria-labelledby="coordTitle">
+      <header>
+        <div>
+          <h2 id="coordTitle">ویرایش مختصات</h2>
+          <p class="meta" id="coordMeta"></p>
+        </div>
+        <p class="meta" id="coordLive" dir="ltr">—</p>
+      </header>
+      <div class="coord-fit">
+      <div class="coord-pitch" id="coordPitch" title="روی زمین کلیک کن">
+        <svg viewBox="0 0 105 68" aria-hidden="true">
+          <rect class="pitch-fill" x="0.8" y="0.8" width="103.4" height="66.4" rx="1.2"></rect>
+          <rect class="pitch-line" x="0.8" y="0.8" width="103.4" height="66.4" rx="1.2"></rect>
+          <line class="pitch-line" x1="52.5" y1="0.8" x2="52.5" y2="67.2"></line>
+          <circle class="pitch-line" cx="52.5" cy="34" r="9.15"></circle>
+          <circle class="pitch-spot" cx="52.5" cy="34" r="0.7"></circle>
+          <rect class="pitch-line" x="0.8" y="13.84" width="16.5" height="40.32"></rect>
+          <rect class="pitch-line" x="0.8" y="24.84" width="5.5" height="18.32"></rect>
+          <rect class="pitch-line" x="87.7" y="13.84" width="16.5" height="40.32"></rect>
+          <rect class="pitch-line" x="98.7" y="24.84" width="5.5" height="18.32"></rect>
+          <path class="pitch-line" d="M17.3 26.2 A9.15 9.15 0 0 1 17.3 41.8"></path>
+          <path class="pitch-line" d="M87.7 26.2 A9.15 9.15 0 0 0 87.7 41.8"></path>
+          <line class="pitch-line goal-line" x1="0.8" y1="30.34" x2="0.8" y2="37.66"></line>
+          <line class="pitch-line goal-line" x1="104.2" y1="30.34" x2="104.2" y2="37.66"></line>
+        </svg>
+        <div class="coord-pin" id="coordPin" hidden></div>
+      </div>
+      </div>
+      <p class="hint" style="margin:0;font-size:12px;color:rgba(243,236,220,0.62)">فقط همین ایونت روی مپ است. یک‌بار کلیک کن تا نقطه ثبت شود، بعد تأیید را بزن.</p>
+      <div class="coord-actions">
+        <button type="button" class="ghost" id="coordCancel">انصراف</button>
+        <button type="button" id="coordApply">تأیید مختصات</button>
+      </div>
+    </div>
+  </div>
   <script>
     const NAMES = {
       PASS: "پاس",
@@ -483,7 +638,11 @@
     const qualityHint = document.querySelector("#qualityHint");
     const saveMsg = document.querySelector("#saveMsg");
     const reviewForm = document.querySelector("#reviewForm");
-    const mapEl = document.querySelector("#map");
+    const coordModal = document.querySelector("#coordModal");
+    const coordPitch = document.querySelector("#coordPitch");
+    const coordPin = document.querySelector("#coordPin");
+    const coordMeta = document.querySelector("#coordMeta");
+    const coordLive = document.querySelector("#coordLive");
 
     let events = [];
     let current = 0;
@@ -491,6 +650,7 @@
     let dirty = new Set();
     let clipStem = "";
     let filling = false;
+    let draftCoords = null;
 
     const STATUS_FA = { pending: "بررسی", ok: "تأیید", fixed: "اصلاح", reject: "رد" };
 
@@ -763,17 +923,67 @@
       go(current);
     }
 
-    function setCoordsFromMap(event) {
-      if (!events[current]) return;
-      const rect = mapEl.getBoundingClientRect();
+    function placeCoordPin(point) {
+      if (!point || point.x === null || point.y === undefined || point.y === null) {
+        coordPin.hidden = true;
+        coordLive.textContent = "هنوز نقطه‌ای انتخاب نشده";
+        return;
+      }
+      const x = clamp(point.x, 0, 105);
+      const y = clamp(point.y, 0, 68);
+      coordPin.hidden = false;
+      coordPin.className = "coord-pin " + teamClass(events[current] || {});
+      coordPin.style.left = (x / 105) * 100 + "%";
+      coordPin.style.bottom = (y / 68) * 100 + "%";
+      coordLive.textContent = "X " + x.toFixed(1) + " , Y " + y.toFixed(1);
+    }
+
+    function openCoordEditor() {
+      const item = events[current];
+      if (!item) return;
+      readFormIntoCurrent();
+      draftCoords = {
+        x: item.x === null || item.x === undefined ? null : Number(item.x),
+        y: item.y === null || item.y === undefined ? null : Number(item.y),
+      };
+      coordMeta.textContent =
+        (NAMES[item.type] || item.type || "ایونت") +
+        " · " + clockText(item.time) +
+        " · ایونت " + fa(current + 1);
+      placeCoordPin(draftCoords);
+      coordModal.hidden = false;
+    }
+
+    function closeCoordEditor() {
+      coordModal.hidden = true;
+      draftCoords = null;
+    }
+
+    function pickCoordOnPitch(event) {
+      const rect = coordPitch.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const x = clamp(((event.clientX - rect.left) / rect.width) * 105, 0, 105);
       const y = clamp((1 - (event.clientY - rect.top) / rect.height) * 68, 0, 68);
-      events[current].x = Math.round(x * 10) / 10;
-      events[current].y = Math.round(y * 10) / 10;
-      fieldX.value = events[current].x;
-      fieldY.value = events[current].y;
-      dirty.add(events[current].id);
+      draftCoords = {
+        x: Math.round(x * 10) / 10,
+        y: Math.round(y * 10) / 10,
+      };
+      placeCoordPin(draftCoords);
+    }
+
+    function applyCoordEditor() {
+      const item = events[current];
+      if (!item || !draftCoords || draftCoords.x === null || draftCoords.y === null) {
+        saveMsg.textContent = "اول روی مپ کلیک کن.";
+        return;
+      }
+      item.x = draftCoords.x;
+      item.y = draftCoords.y;
+      fieldX.value = item.x;
+      fieldY.value = item.y;
+      dirty.add(item.id);
+      closeCoordEditor();
+      saveMsg.textContent = "مختصات روی فرم نشست. برای ماندگار شدن ذخیره کن.";
       draw();
     }
 
@@ -1025,9 +1235,18 @@
     document.querySelector("#deleteEventForm").addEventListener("click", () => {
       deleteCurrentEvent().catch(() => { saveMsg.textContent = "حذف نشد."; });
     });
-    mapEl.addEventListener("click", (event) => {
-      if (event.target.closest(".mark")) return;
-      setCoordsFromMap(event);
+    document.querySelector("#editCoords").addEventListener("click", openCoordEditor);
+    document.querySelector("#coordCancel").addEventListener("click", closeCoordEditor);
+    document.querySelector("#coordApply").addEventListener("click", applyCoordEditor);
+    coordPitch.addEventListener("click", pickCoordOnPitch);
+    coordModal.addEventListener("click", (event) => {
+      if (event.target === coordModal) closeCoordEditor();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !coordModal.hidden) {
+        event.preventDefault();
+        closeCoordEditor();
+      }
     });
 
     const stem = params().get("stem");
